@@ -10,9 +10,9 @@ CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 API = "https://api.dexscreener.com"
 STATE_FILE = "state.json"
 
-START_CASH = 1000.0
-POSITION_USD = 100.0
-MAX_POSITIONS = 3
+START_CASH = 25.0
+POSITION_USD = 5.0
+MAX_POSITIONS = 2
 FEE = 0.03
 TAKE_PROFIT = 0.50
 STOP_LOSS = -0.20
@@ -20,6 +20,7 @@ MAX_HOLD_HOURS = 24
 MIN_LIQUIDITY = 25_000
 MIN_VOLUME_24H = 50_000
 MIN_AGE_MIN = 60
+REDIST_PERIOD = 3600
 
 
 def get(path):
@@ -113,24 +114,37 @@ def volume_spike(p):
     return avg > 0 and vol(p, "h1") > 3 * avg and chg(p, "h1") > 0
 
 
+def breakout(p):
+    avg = vol(p, "h24") / 24
+    return (
+        avg > 0
+        and 5 <= chg(p, "h1") <= 60
+        and vol(p, "h1") > avg
+        and chg(p, "h24") < 30
+    )
+
+
 AGENTS = {
     "momentum": momentum,
     "dip_buyer": dip_buyer,
     "volume_spike": volume_spike,
+    "breakout": breakout,
 }
 
 
 def load_state():
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE) as f:
-            return json.load(f)
-    return {
-        "last_report": "",
-        "agents": {
-            n: {"cash": START_CASH, "positions": {}, "closed": []}
-            for n in AGENTS
-        },
-    }
+            state = json.load(f)
+    else:
+        state = {"last_report": "", "agents": {}}
+
+    state.setdefault("last_redistribution", 0)
+    for n in AGENTS:
+        state["agents"].setdefault(
+            n, {"cash": START_CASH, "positions": {}, "closed": []}
+        )
+    return state
 
 
 def save_state(state):
@@ -144,6 +158,49 @@ def equity(ag):
     )
 
 
+def redistribute(state, pairs, now):
+    last = state.get("last_redistribution", 0)
+    if last == 0:
+        state["last_redistribution"] = now
+        return None
+    if now - last < REDIST_PERIOD:
+        return None
+
+    equities = {n: equity(ag) for n, ag in state["agents"].items()}
+    worst_name = min(equities, key=equities.get)
+    best_name = max(equities, key=equities.get)
+    if worst_name == best_name:
+        state["last_redistribution"] = now
+        return None
+
+    worst = state["agents"][worst_name]
+
+    # Liquidate the worst trader at current prices so "half capital" is unambiguous.
+    for addr in list(worst["positions"]):
+        pos = worst["positions"][addr]
+        p = pairs.get(addr)
+        if p:
+            pos["last_price"] = num(p["priceUsd"])
+        proceeds = pos["qty"] * pos["last_price"] * (1 - FEE)
+        worst["cash"] += proceeds
+        pnl = proceeds - pos["cost"]
+        worst["closed"].append({"symbol": pos["symbol"], "pnl": round(pnl, 2)})
+        worst["closed"] = worst["closed"][-500:]
+        del worst["positions"][addr]
+
+    transfer = worst["cash"] * 0.5
+    worst["cash"] -= transfer
+    state["agents"][best_name]["cash"] += transfer
+    state["last_redistribution"] = now
+
+    return (
+        f"🔄 Hourly redistribution: {worst_name} → {best_name}, "
+        f"transferred £{transfer:.2f} "
+        f"(worst now £{worst['cash']:.2f}, "
+        f"best now £{equity(state['agents'][best_name]):.2f})"
+    )
+
+
 def main():
     state = load_state()
     now = time.time()
@@ -151,6 +208,10 @@ def main():
     cands = candidate_addresses()
     pairs = fetch_pairs(list(held | set(cands)))
     alerts = []
+
+    redist = redistribute(state, pairs, now)
+    if redist:
+        alerts.append(redist)
 
     for name, rule in AGENTS.items():
         ag = state["agents"][name]
@@ -178,7 +239,7 @@ def main():
                 del ag["positions"][addr]
                 alerts.append(
                     f"[{name}] SELL {pos['symbol']} ({reason}) "
-                    f"{ret * 100:+.1f}%, P&L ${pnl:+.2f}"
+                    f"{ret * 100:+.1f}%, P&L £{pnl:+.2f}"
                 )
 
         for addr in cands:
@@ -208,7 +269,7 @@ def main():
                 "cost": POSITION_USD,
                 "opened_at": now,
             }
-            alerts.append(f"[{name}] BUY {sym} at ${price:.8g} (${POSITION_USD:.0f})")
+            alerts.append(f"[{name}] BUY {sym} at ${price:.8g} (£{POSITION_USD:.0f})")
 
     utc = datetime.now(timezone.utc)
     today = utc.strftime("%Y-%m-%d")
@@ -221,7 +282,7 @@ def main():
             wins = sum(1 for t in c if t["pnl"] > 0)
             wr = f"{wins / len(c) * 100:.0f}%" if c else "n/a"
             lines.append(
-                f"{name}: ${eq:,.0f} ({(eq / START_CASH - 1) * 100:+.1f}%), "
+                f"{name}: £{eq:,.2f} ({(eq / START_CASH - 1) * 100:+.1f}%), "
                 f"{len(c)} trades, win rate {wr}, open {len(ag['positions'])}"
             )
         alerts.append("\n".join(lines))
