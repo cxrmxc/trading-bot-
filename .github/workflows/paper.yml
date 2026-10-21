@@ -1,32 +1,35 @@
 name: Paper bot
-
 on:
   schedule:
-    - cron: "*/30 * * * *"
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-concurrency:
-  group: paper-bot
-
+    - cron: "15 * * * *"   # Runs 15 minutes past every hour
+  workflow_dispatch:       # Allows you to click "Run workflow" manually
 jobs:
   run:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      # Crucial: allows the bot to save state.json back to the repo
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install requests
-      - run: python paper_bot.py
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run the bot
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      - name: Save state
+        run: python paper_bot.py
+
+      - name: Commit and save state
         run: |
-          git config user.name "paper-bot"
-          git config user.email "paper-bot@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json
-          git diff --staged --quiet || (git commit -m "update state" && git push)
+          git diff --staged --quiet || git commit -m "Update state [skip ci]"
+          git push
