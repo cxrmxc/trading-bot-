@@ -1,54 +1,54 @@
 {
- "last_report": "2026-10-21",
- "agents": {
-  "momentum": {
-   "cash": 800.0,
-   "positions": {
-    "3JEe9dCTw17NCGzeKS5ZApv4qGQTjp6TJahGkndcpump": {
-     "symbol": "TRUMP",
-     "entry_price": 0.0002415,
-     "last_price": 0.0002415,
-     "qty": 401656.314699793,
-     "cost": 100.0,
-     "opened_at": 1792587293.4017887
+  "last_report": "2026-10-21",
+  "agents": {
+    "momentum": {
+      "cash": 800.0,
+      "positions": {
+        "3JEe9dCTw17NCGzeKS5ZApv4qGQTjp6TJahGkndcpump": {
+          "symbol": "TRUMP",
+          "entry_price": 0.0002415,
+          "last_price": 0.0002415,
+          "qty": 401656.314699793,
+          "cost": 100.0,
+          "opened_at": 1792587293.4017887
+        },
+        "HuShD8S8AqrFGDWeqtkm3oJAdQyWkRgaHRZ1jZFBFuNd": {
+          "symbol": "HUSH",
+          "entry_price": 0.0001139,
+          "last_price": 0.0001139,
+          "qty": 851624.2317822651,
+          "cost": 100.0,
+          "opened_at": 1792587293.4017887
+        }
+      },
+      "closed": []
     },
-    "HuShD8S8AqrFGDWeqtkm3oJAdQyWkRgaHRZ1jZFBFuNd": {
-     "symbol": "HUSH",
-     "entry_price": 0.0001139,
-     "last_price": 0.0001139,
-     "qty": 851624.2317822651,
-     "cost": 100.0,
-     "opened_at": 1792587293.4017887
-    }
-   },
-   "closed": []
-  },
-  "dip_buyer": {
-   "cash": 1000.0,
-   "positions": {},
-   "closed": []
-  },
-  "volume_spike": {
-   "cash": 800.0,
-   "positions": {
-    "3JEe9dCTw17NCGzeKS5ZApv4qGQTjp6TJahGkndcpump": {
-     "symbol": "TRUMP",
-     "entry_price": 0.0002415,
-     "last_price": 0.0002415,
-     "qty": 401656.314699793,
-     "cost": 100.0,
-     "opened_at": 1792587293.4017887
+    "dip_buyer": {
+      "cash": 1000.0,
+      "positions": {},
+      "closed": []
     },
-    "HuShD8S8AqrFGDWeqtkm3oJAdQyWkRgaHRZ1jZFBFuNd": {
-     "symbol": "HUSH",
-     "entry_price": 0.0001139,
-     "last_price": 0.0001139,
-     "qty": 851624.2317822651,
-     "cost": 100.0,
-     "opened_at": 1792587293.4017887
+    "volume_spike": {
+      "cash": 800.0,
+      "positions": {
+        "3JEe9dCTw17NCGzeKS5ZApv4qGQTjp6TJahGkndcpump": {
+          "symbol": "TRUMP",
+          "entry_price": 0.0002415,
+          "last_price": 0.0002415,
+          "qty": 401656.314699793,
+          "cost": 100.0,
+          "opened_at": 1792587293.4017887
+        },
+        "HuShD8S8AqrFGDWeqtkm3oJAdQyWkRgaHRZ1jZFBFuNd": {
+          "symbol": "HUSH",
+          "entry_price": 0.0001139,
+          "last_price": 0.0001139,
+          "qty": 851624.2317822651,
+          "cost": 100.0,
+          "opened_at": 1792587293.4017887
+        }
+      },
+      "closed": []
     }
-   },
-   "closed": []
   }
- }
 }
